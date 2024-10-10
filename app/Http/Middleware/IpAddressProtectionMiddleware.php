@@ -11,7 +11,11 @@ class IpAddressProtectionMiddleware
     protected $allowedIPs = [
         '',
         'http://test.localhost:8000',
-      
+        'http://icbcnetwork.com',
+        'http://www.icbcnetwork.com',
+        'https://icbcnetwork.com',
+        'https://www.icbcnetwork.com',
+
 
 
 
