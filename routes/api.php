@@ -58,3 +58,6 @@ Route::get('/commissions', [CommissionController::class, 'getCommissionRates']);
 
 // Route for Distributing Commission (called when a purchase is made)
 Route::post('/commissions/distribute/{user}', [CommissionTransactionController::class, 'distributeCommission']);
+
+
+Route::post('/products/create', [ProductController::class, 'createProduct']);
