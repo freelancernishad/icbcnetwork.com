@@ -8,6 +8,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\VisitorController;
 use App\Http\Controllers\WeatherController;
+use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\SocialLinkController;
 use App\Http\Controllers\AdvertisementController;
 
@@ -49,3 +50,11 @@ Route::post('/register', [UserController::class, 'register']);
 Route::post('/login', [UserController::class, 'login']);
 Route::get('/products', [ProductController::class, 'getAllProducts']);
 Route::post('/buy-product', [ProductController::class, 'buyProduct'])->middleware('auth:sanctum');
+
+
+// Routes for Commission rates
+Route::post('/commissions/set-rate', [CommissionController::class, 'setCommissionRate']);
+Route::get('/commissions', [CommissionController::class, 'getCommissionRates']);
+
+// Route for Distributing Commission (called when a purchase is made)
+Route::post('/commissions/distribute/{user}', [CommissionTransactionController::class, 'distributeCommission']);

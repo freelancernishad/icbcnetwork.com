@@ -13,12 +13,26 @@ class User extends Authenticatable implements JWTSubject // Implement JWTSubject
     use HasApiTokens, Notifiable;
 
     protected $fillable = [
-        'name', 'phone', 'password',
+        'name', 'phone', 'password','refer_by',
     ];
 
     protected $hidden = [
         'password',
     ];
+
+
+
+        // Relationship for referring user
+        public function referrer()
+        {
+            return $this->belongsTo(User::class, 'refer_by');
+        }
+
+        // Relationship for users referred by this user
+        public function referredUsers()
+        {
+            return $this->hasMany(User::class, 'refer_by');
+        }
 
     public function setPasswordAttribute($password)
     {
