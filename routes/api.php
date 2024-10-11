@@ -52,6 +52,16 @@ Route::get('/products', [ProductController::class, 'getAllProducts']);
 Route::post('/buy-product', [ProductController::class, 'buyProduct'])->middleware('auth:sanctum');
 
 
+
+Route::post('/products/approve/{id}', [ProductController::class, 'approvePayment']); // To approve payment
+Route::post('/products/reject/{id}', [ProductController::class, 'rejectPayment']); // To reject payment
+Route::get('/products/pending-payments', [ProductController::class, 'listPendingPayments']); // List pending payments
+Route::get('/products/approved-payments', [ProductController::class, 'listApprovedPayments']); // List approved payments
+
+
+
+
+
 // Routes for Commission rates
 Route::post('/commissions/set-rate', [CommissionController::class, 'setCommissionRate']);
 Route::get('/commissions', [CommissionController::class, 'getCommissionRates']);

@@ -8,7 +8,6 @@ use App\Models\UserProduct;
 use App\Models\CommissionTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\CommissionTransactionController;
 
 class ProductController extends Controller
 {
@@ -19,7 +18,7 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
-    // Buy Product and distribute commissions
+    // Buy Product and create a purchase entry with pending status
     public function buyProduct(Request $request)
     {
         $request->validate([
@@ -29,26 +28,69 @@ class ProductController extends Controller
             'trx_id' => 'required|string|unique:user_products,trx_id',
         ]);
 
-        // Create a purchase entry in the user_products table
+        // Create a purchase entry in the user_products table with pending status
         $purchase = UserProduct::create([
             'user_id' => Auth::id(),
             'product_id' => $request->product_id,
             'channel' => $request->channel,
             'send_account' => $request->send_account,
             'trx_id' => $request->trx_id,
+            'status' => 'pending', // Set status to pending
         ]);
 
-        // Fetch the product and its price for commission calculation
-        $product = Product::find($request->product_id);
-        $productPrice = $product->price; // Assuming there's a price field in the Product model
+        return response()->json(['message' => 'Product purchase initiated and is pending approval']);
+    }
 
-        // Set the purchased package on the user
-        $this->setUserPackage(Auth::user(), $product);
+    // Approve Product Payment
+    public function approvePayment($id)
+    {
+        $purchase = UserProduct::findOrFail($id);
+        if ($purchase->status === 'pending') {
+            $purchase->status = 'approved';
+            $purchase->save();
 
-        // Distribute commissions to referrers
-        $this->distributeCommissions(Auth::user(), $productPrice);
+            // Fetch the product and its price for commission calculation
+            $product = Product::find($purchase->product_id);
+            $productPrice = $product->price; // Assuming there's a price field in the Product model
 
-        return response()->json(['message' => 'Product purchased successfully and commissions distributed']);
+            // Set the purchased package on the user
+            $this->setUserPackage(Auth::user(), $product);
+
+            // Distribute commissions to referrers
+            $this->distributeCommissions(Auth::user(), $productPrice);
+
+            return response()->json(['message' => 'Payment approved and commissions distributed']);
+        }
+
+        return response()->json(['message' => 'Payment is already approved or cannot be approved'], 400);
+    }
+
+    // Reject Product Payment
+    public function rejectPayment($id)
+    {
+        $purchase = UserProduct::findOrFail($id);
+        if ($purchase->status === 'pending') {
+            $purchase->status = 'rejected';
+            $purchase->save();
+
+            return response()->json(['message' => 'Payment rejected successfully']);
+        }
+
+        return response()->json(['message' => 'Payment is already processed or cannot be rejected'], 400);
+    }
+
+    // List all pending payments
+    public function listPendingPayments()
+    {
+        $pendingPayments = UserProduct::where('status', 'pending')->get();
+        return response()->json($pendingPayments);
+    }
+
+    // List all approved payments
+    public function listApprovedPayments()
+    {
+        $approvedPayments = UserProduct::where('status', 'approved')->get();
+        return response()->json($approvedPayments);
     }
 
     // Set the purchased package on the user
@@ -91,36 +133,34 @@ class ProductController extends Controller
         }
     }
 
+    // Create a new product
+    public function createProduct(Request $request)
+    {
+        // Validate request data
+        $request->validate([
+            'daily_percentage' => 'required|numeric|min:0',
+            'total_percentage' => 'required|numeric|min:0',
+            'daily_income' => 'required|numeric|min:0',
+            'total_earnings' => 'required|numeric|min:0',
+            'days' => 'required|integer|min:1',
+            'price' => 'required|numeric|min:0',
+            'cashback' => 'required|numeric|min:0',
+        ]);
 
-     // Create a new product
-     public function createProduct(Request $request)
-     {
-         // Validate request data
-         $request->validate([
-             'daily_percentage' => 'required|numeric|min:0',
-             'total_percentage' => 'required|numeric|min:0',
-             'daily_income' => 'required|numeric|min:0',
-             'total_earnings' => 'required|numeric|min:0',
-             'days' => 'required|integer|min:1',
-             'price' => 'required|numeric|min:0',
-             'cashback' => 'required|numeric|min:0',
-         ]);
+        // Create the product
+        $product = Product::create([
+            'daily_percentage' => $request->daily_percentage,
+            'total_percentage' => $request->total_percentage,
+            'daily_income' => $request->daily_income,
+            'total_earnings' => $request->total_earnings,
+            'days' => $request->days,
+            'price' => $request->price,
+            'cashback' => $request->cashback,
+        ]);
 
-         // Create the product
-         $product = Product::create([
-             'daily_percentage' => $request->daily_percentage,
-             'total_percentage' => $request->total_percentage,
-             'daily_income' => $request->daily_income,
-             'total_earnings' => $request->total_earnings,
-             'days' => $request->days,
-             'price' => $request->price,
-             'cashback' => $request->cashback,
-         ]);
-
-         return response()->json([
-             'message' => 'Product created successfully',
-             'product' => $product,
-         ]);
-     }
-
+        return response()->json([
+            'message' => 'Product created successfully',
+            'product' => $product,
+        ]);
+    }
 }
