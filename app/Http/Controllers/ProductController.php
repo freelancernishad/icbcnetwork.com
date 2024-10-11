@@ -90,4 +90,37 @@ class ProductController extends Controller
             $level++;
         }
     }
+
+
+     // Create a new product
+     public function createProduct(Request $request)
+     {
+         // Validate request data
+         $request->validate([
+             'daily_percentage' => 'required|numeric|min:0',
+             'total_percentage' => 'required|numeric|min:0',
+             'daily_income' => 'required|numeric|min:0',
+             'total_earnings' => 'required|numeric|min:0',
+             'days' => 'required|integer|min:1',
+             'price' => 'required|numeric|min:0',
+             'cashback' => 'required|numeric|min:0',
+         ]);
+
+         // Create the product
+         $product = Product::create([
+             'daily_percentage' => $request->daily_percentage,
+             'total_percentage' => $request->total_percentage,
+             'daily_income' => $request->daily_income,
+             'total_earnings' => $request->total_earnings,
+             'days' => $request->days,
+             'price' => $request->price,
+             'cashback' => $request->cashback,
+         ]);
+
+         return response()->json([
+             'message' => 'Product created successfully',
+             'product' => $product,
+         ]);
+     }
+
 }
